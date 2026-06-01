@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backpropagation 期末評量成果報告</title>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --primary-dark: #3730a3;
+            --secondary: #06b6d4;
+            --secondary-light: #ecfeff;
+            --accent-red: #ef4444;
+            --accent-green: #10b981;
+            --border-color: #e2e8f0;
+            --code-bg: #1e293b;
+            --code-text: #f8fafc;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 0 0 60px 0;
+        }
+
+        /* Header 樣式 */
+        header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .header-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .student-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px 25px;
+            border-radius: 50px;
+            backdrop-filter: blur(5px);
+            display: inline-flex;
+            font-size: 1rem;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .student-info span strong {
+            color: #67e8f9;
+        }
+
+        /* 主要佈局 */
+        main {
+            max-width: 1100px;
+            margin: 40px auto 0 auto;
+            padding: 0 20px;
+        }
+
+        .section-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 35px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .section-card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            color: var(--primary);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 10px;
+        }
+
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 24px;
+            background-color: var(--secondary);
+            border-radius: 3px;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin: 25px 0 12px 0;
+            font-weight: 600;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin-left: 24px;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* 數學公式塊 */
+        .math-block {
+            background-color: var(--primary-light);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            overflow-x: auto;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+
+        /* 程式碼區塊 */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'Fira Code', Consolas, Monaco, monospace;
+            font-size: 0.95rem;
+            margin: 20px 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        code {
+            font-family: 'Fira Code', Consolas, Monaco, monospace;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        /* Chat UI 樣式 */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background-color: #f1f5f9;
+            padding: 25px;
+            border-radius: 16px;
+            margin: 20px 0;
+        }
+
+        .chat-bubble {
+            max-width: 85%;
+            padding: 16px 20px;
+            border-radius: 14px;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .chat-bubble.user {
+            background-color: var(--primary);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .chat-bubble.user p {
+            color: white;
+            margin-bottom: 0;
+        }
+
+        .chat-bubble.ai {
+            background-color: white;
+            color: var(--text-primary);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-bubble.ai p {
+            margin-bottom: 12px;
+        }
+        .chat-bubble.ai p:last-child {
+            margin-bottom: 0;
+        }
+
+        .avatar-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            display: block;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-bubble.user .avatar-label {
+            color: #c7d2fe;
+            text-align: right;
+        }
+
+        .chat-bubble.ai .avatar-label {
+            color: var(--secondary);
+        }
+
+        /* 比較表格 */
+        .compare-table-container {
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 14px 18px;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-red { background-color: #fee2e2; color: #b91c1c; }
+        .badge-green { background-color: #d1fae5; color: #065f46; }
+
+        /* SVG 容器響應式 */
+        .svg-container {
+            width: 100%;
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 25px 0;
+            box-shadow: var(--shadow-md);
+            overflow-x: auto;
+        }
+
+        .svg-container svg {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* 響應式切換 */
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.6rem; }
+            .student-info { flex-direction: column; gap: 10px; border-radius: 16px; width: 100%; }
+            .section-card { padding: 25px; }
+            .chat-bubble { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-container">
+            <h1>深入探討 Backpropagation（反向傳播算法）之 AI 輔助學習成果</h1>
+            <div class="student-info">
+                <span><strong>學號：</strong>111316032</span>
+                <span><strong>姓名：</strong>劉峻宏</span>
+                <span><strong>系級：</strong>資訊科學系</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section-card">
+            <h2>1. 演算法介紹</h2>
+            <p><strong>Backpropagation（反向傳播算法）</strong>是現代深度學習的基石，本質上是一種高效計算神經網路中所有可訓練參數梯度的<strong>動態規劃（Dynamic Programming）</strong>算法。在深度學習中，為了讓模型學會辨識特徵，我們必須最小化損失函數（Loss Function）。而調整權重的核心依據就是損失函數對權重的偏導數（即梯度）。</p>
+            
+            <h3>主要解決之核心問題</h3>
+            <p>在傳統的多層神經網路中，若使用數值微分（極小步長擾動）來逐一計算梯度，其時間複雜度將隨著參數量的暴增而呈現線性代價，這在擁有數百萬甚至數千億參數的現代網路中是完全不可能實現的。若採用人工符號微分，則在多層非線性複合函數下，公式推導極易出錯且缺乏通用性。Backpropagation 完美解決了這一痛點：它能在一次反向傳遞中，以與前向傳播相同的時間複雜度 $O(N)$，精確計算出所有層權重的梯度，突破了人工推導與傳統計算的極限。</p>
+
+            <h3>基本運作流程</h3>
+            <ol>
+                <li>
+                    <strong>前向傳播（Forward Pass）計算損失：</strong>
+                    輸入資料自輸入層傳入，逐層經過權重矩陣與非線性激活函數的轉換，最終在輸出層產生預測值 $\hat{y}$。接著，透過損失函數計算預測值與真實標籤 $y$ 之間的誤差（Loss 值）。
+                    <div class="math-block">
+                        $$z^{(l)} = W^{(l)} a^{(l-1)} + b^{(l)}, \quad a^{(l)} = \sigma(z^{(l)})$$
+                    </div>
+                </li>
+                <li>
+                    <strong>反向傳播（Backward Pass）傳遞誤差並更新權重：</strong>
+                    從輸出層開始，將誤差訊號依據網路架構「由後往前」依序傳遞。利用鏈鎖律計算出損失函數對每一層權重 $W$ 和偏差 $b$ 的偏導數，最後利用梯度下降法（Gradient Descent）或其變體（如 Adam）來調整參數，達到降低誤差的目的。
+                    <div class="math-block">
+                        $$W^{(l)} \leftarrow W^{(l)} - \eta \frac{\partial L}{\partial W^{(l)}}$$
+                    </div>
+                </li>
+            </ol>
+
+            <h3>核心數學直覺：微積分連鎖律（Chain Rule）</h3>
+            <p>反向傳播的數學靈魂正是微積分中的<strong>連鎖律（Chain Rule）</strong>。由於深度神經網路是由多個隱藏層堆疊而成的巨大複合函數，若要計算最終損失 $L$ 對於網路前半段某個權重 $w$ 的影響，我們不需要將整個複雜函數強行展開，而是將其拆解為局部導數的乘積。透過將後面的誤差梯度 $\delta^{(l+1)}$ 乘上當前層的局部導數，便能優雅地將梯度一路回傳。</p>
+            <div class="math-block">
+                $$\frac{\partial L}{\partial w_{ij}^{(l)}} = \frac{\partial L}{\partial z_i^{(l)}} \cdot \frac{\partial z_i^{(l)}}{\partial w_{ij}^{(l)}} = \delta_i^{(l)} a_j^{(l-1)}$$
+            </div>
+
+            <h3>常見應用</h3>
+            <p>Backpropagation 廣泛應用於當今所有主流的深度學習架構中，包含用於表格數據與基礎預測的<strong>多層感知機（MLP）</strong>、用於影像辨識與視覺運算的<strong>卷積神經網路（CNN）</strong>，以及當今驅動大型語言模型（LLM）核心的 <strong>Transformer 架構</strong>。只要模型具備可微（Differentiable）性質，反向傳播就是其實現自動優化的唯一核心驅動引擎。</p>
+        </section>
+
+        <section class="section-card">
+            <h2>2. AI 輔助學習紀錄</h2>
+            <p>以下呈現我在學習反向傳播算法時，與 AI 導師互動的真實對話精華。這段對話幫助我成功建立起前向資料流與反向梯度流的動態思維空間。</p>
+            
+            <div class="chat-container">
+                <div class="chat-bubble user">
+                    <span class="avatar-label">學生 (我)</span>
+                    <p>請解釋為什麼反向傳播在深層網路會遇到「梯度消失（Gradient Vanishing）」？資料流跟梯度流在這邊是怎麼打結的？</p>
+                </div>
+                <div class="chat-bubble ai">
+                    <span class="avatar-label">AI 助手</span>
+                    <p>很好的問題！我們可以用<strong>「資料流向前建立依賴，梯度流向後連乘拆解」</strong>來理解。</p>
+                    <p>在<strong>前向傳播（資料流）</strong>時，每一層的輸入經由權重和激活函數變成輸出，這是一個連續複合的過程：$a_3 = \sigma(z_3(a_2(z_2(a_1)))))$。</p>
+                    <p>當進入<strong>反向傳播（梯度流）</strong>時，根據微積分的連鎖律，我們要計算最前方層的梯度，就必須把後面所有層的局部導數全部<strong>「連乘」</strong>起來。如果你在隱藏層使用了像 <code>Sigmoid</code> 這樣的激活函數，它的導數最大值只有 0.25。當網路很深時（例如 10 層），這意味著梯度流在回傳過程中，必須連續乘以 10 個小於 0.25 的數，$(0.25)^{10} \approx 0.00000095$。這會導致傳到最前端隱藏層的梯度幾乎衰減為零，使得前幾層的權重根本無法更新，這就是梯度消失的本質！</p>
+                </div>
+                <div class="chat-bubble user">
+                    <span class="avatar-label">學生 (我)</span>
+                    <p>噢！所以我懂了。前向傳播是把訊號一層層包進去，反向傳播是用連鎖律一層層剝開。如果每一層剝開時都會縮小成原來的四分之一，那越前面的層分到的梯度就越小！</p>
+                </div>
+                <div class="chat-bubble ai">
+                    <span class="avatar-label">AI 助手</span>
+                    <p>完全正確！你的比喻非常傳神。這就是為什麼後來深度學習界會改用 <code>ReLU</code> 激活函數（其正數區間導數恆為 1），或者使用殘差連接（Residual Connection, 如 ResNet），目的就是為了在反向傳播時，為梯度流建立一條沒有阻礙的「高速公路」，防止它在連乘中乾涸消失。</p>
+                </div>
+            </div>
+            <p><strong>釐清成效：</strong>透過與 AI 的思維碰撞，我清楚理解到前向傳播是在建立一個龐大的運算圖（Computation Graph）並儲存中間變數 $a^{(l)}$，而反向傳播則是沿著運算圖反向走回去。梯度消失並非資料流不見了，而是梯度流在反向連乘時被激活函數的微小局部導數給消磨殆盡。</p>
+        </section>
+
+        <section class="section-card">
+            <h2>3. 查證與修正</h2>
+            <p>雖然 AI 提供了非常直觀的連乘解釋，但作為資訊科學系的學生，我認為必須對「Sigmoid 激活函數在反向傳播中導致梯度消失的數學原因」進行嚴格的學術查證，以確保理解沒有落入過度簡化的陷阱。</p>
+            
+            <h3>查證過程與文獻來源</h3>
+            <p>我查閱了經典教科書 Ian Goodfellow, Yoshua Bengio, and Aaron Courville 的 <strong>《Deep Learning》</strong>（第 6 章深度前饋網路中的反向傳播演算法），並對照了 <strong>PyTorch 官方文件</strong> 中關於 <code>torch.nn.Sigmoid</code> 的後向傳播實現邏輯。</p>
+
+            <div class="compare-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">面向</th>
+                            <th style="width: 40%;">AI 原本的回答摘要</th>
+                            <th style="width: 40%;">經教科書查證與數學推導後的精確修正</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>核心機制</strong></td>
+                            <td>只提到 Sigmoid 的導數很小，連乘後會趨近於零。</td>
+                            <td>明確推導出 Sigmoid 導數公式為 $\sigma'(z) = \sigma(z)(1-\sigma(z))$。當 $z=0$ 時，$\sigma(0)=0.5$，導數取得最大值 $0.5 \times (1-0.5) = 0.25$。當 $z$ 很大或很小時，導數趨近於 0（飽和區）。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>權重影響</strong></td>
+                            <td>忽略了權重矩陣 $W$ 對梯度流的同步作用。</td>
+                            <td>查證發現，嚴格來說每一層的誤差項傳遞公式為 $\delta^{(l)} = (W^{(l+1)})^T \delta^{(l+1)} \odot \sigma'(z^{(l)})$。梯度是否消失不僅取決於 $\sigma'$，還取決於權重矩陣 $W$ 的特徵值。若 $W$ 初始化過小且激活函數最大值為 0.25，才會加速崩塌。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>結論層次</strong></td>
+                            <td><span class="badge badge-red">觀念簡化</span> 知道結果，但缺乏嚴謹的函數邊界認知。</td>
+                            <td><span class="badge badge-green">嚴謹全面</span> 理解到梯度消失源於 Sigmoid 的<strong>飽和性（Saturation）</strong>與最大導數邊界限制。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>精確數學推導驗證</h3>
+            <p>已知 Sigmoid 函數為：$$\sigma(z) = \frac{1}{1 + e^{-z}}$$</p>
+            <p>對其求導數：</p>
+            <div class="math-block">
+                $$\sigma'(z) = \frac{d}{dz}(1 + e^{-z})^{-1} = -(1 + e^{-z})^{-2} \cdot (-e^{-z}) = \frac{e^{-z}}{(1 + e^{-z})^2}$$
+                $$\sigma'(z) = \frac{1}{1 + e^{-z}} \cdot \frac{e^{-z}}{1 + e^{-z}} = \sigma(z) \cdot (1 - \sigma(z))$$
+            </div>
+            <p>由於 $\sigma(z)$ 的輸出值域在 $(0, 1)$ 之間，根據二次函數性質，當 $\sigma(z) = 0.5$ 亦即 $z=0$ 時，$\sigma'(z)$ 有最大值：$0.5 \times (1 - 0.5) = 0.25$。這嚴格證明了不論輸入為何，Sigmoid 導數永遠不可能超過 $0.25$。查證步驟讓我跨越了「似懂非懂」的鴻溝，真正掌握了底層數學。</p>
+        </section>
+
+        <section class="section-card">
+            <h2>4. 視覺化說明</h2>
+            <p>下圖為神經網路反向傳播的架構與流程圖。藍色實線箭頭代表<strong>前向傳播（Forward Pass）</strong>的資料流與損失計算；紅色虛線箭頭代表<strong>反向傳播（Backward Pass）</strong>的梯度流向。藉此可以直觀看出連鎖律是如何由後往前傳遞誤差訊號的。</p>
+            
+            <div class="svg-container">
+                <svg width="850" height="380" viewBox="0 0 850 380" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <marker id="arrow-forward" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6"/>
+                        </marker>
+                        <marker id="arrow-backward" markerWidth="10" markerHeight="7" refX="2" refY="3.5" orient="auto">
+                            <polygon points="10 0, 0 3.5, 10 7" fill="#ef4444"/>
+                        </marker>
+                    </defs>
+
+                    <g transform="translate(20, 20)">
+                        <line x1="0" y1="10" x2="40" y2="10" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrow-forward)" />
+                        <text x="50" y="15" fill="#94a3b8" font-size="12" font-weight="bold">前向傳播資料流 (Forward Pass)</text>
+                        
+                        <line x1="300" y1="10" x2="340" y2="10" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,4" marker-start="url(#arrow-backward)" />
+                        <text x="350" y="15" fill="#94a3b8" font-size="12" font-weight="bold">反向傳播梯度流 (Backward Gradient Flow)</text>
+                    </g>
+
+                    <text x="120" y="70" fill="#cbd5e1" font-size="14" font-weight="bold" text-anchor="middle">輸入層 (Input)</text>
+                    <text x="370" y="70" fill="#cbd5e1" font-size="14" font-weight="bold" text-anchor="middle">隱藏層 (Hidden Layer)</text>
+                    <text x="620" y="70" fill="#cbd5e1" font-size="14" font-weight="bold" text-anchor="middle">輸出層 (Output)</text>
+                    <text x="770" y="70" fill="#cbd5e1" font-size="14" font-weight="bold" text-anchor="middle">損失函數</text>
+
+                    <circle cx="120" cy="150" r="20" fill="#334155" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="120" y="154" fill="#ffffff" font-size="12" text-anchor="middle">x₁</text>
+                    
+                    <circle cx="120" cy="250" r="20" fill="#334155" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="120" y="254" fill="#ffffff" font-size="12" text-anchor="middle">x₂</text>
+
+                    <circle cx="370" cy="110" r="22" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
+                    <text x="370" y="114" fill="#ffffff" font-size="12" text-anchor="middle">h₁</text>
+
+                    <circle cx="370" cy="200" r="22" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
+                    <text x="370" y="204" fill="#ffffff" font-size="12" text-anchor="middle">h₂</text>
+
+                    <circle cx="370" cy="290" r="22" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
+                    <text x="370" y="294" fill="#ffffff" font-size="12" text-anchor="middle">h₃</text>
+
+                    <circle cx="620" cy="200" r="22" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+                    <text x="620" y="204" fill="#ffffff" font-size="12" text-anchor="middle">ŷ</text>
+
+                    <rect x="735" y="175" width="70" height="50" rx="8" fill="#7f1d1d" stroke="#ef4444" stroke-width="2"/>
+                    <text x="770" y="205" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">Loss (L)</text>
+
+                    <path d="M 140 145 L 348 112" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-forward)"/>
+                    <path d="M 142 149 L 346 116" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,4" marker-start="url(#arrow-backward)"/>
+                    <text x="220" y="120" fill="#38bdf8" font-size="11">W⁽¹⁾</text>
+                    <text x="220" y="145" fill="#f87171" font-size="10">∂L/∂W⁽¹⁾</text>
+
+                    <path d="M 140 255 L 348 288" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-forward)"/>
+                    <path d="M 142 251 L 346 284" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,4" marker-start="url(#arrow-backward)"/>
+
+                    <path d="M 140 155 L 348 195" stroke="#3b82f6" stroke-width="1.5"/>
+                    <path d="M 140 245 L 348 205" stroke="#3b82f6" stroke-width="1.5"/>
+
+                    <path d="M 392 115 L 598 192" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-forward)"/>
+                    <path d="M 394 119 L 596 196" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,4" marker-start="url(#arrow-backward)"/>
+                    <text x="480" y="140" fill="#38bdf8" font-size="11">W⁽²⁾</text>
+                    <text x="480" y="165" fill="#f87171" font-size="10">∂L/∂W⁽²⁾</text>
+
+                    <path d="M 392 200 L 596 200" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-forward)"/>
+                    <path d="M 392 204 L 596 204" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,4" marker-start="url(#arrow-backward)"/>
+
+                    <path d="M 392 285 L 598 208" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-forward)"/>
+                    <path d="M 394 281 L 596 204" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,4" marker-start="url(#arrow-backward)"/>
+
+                    <path d="M 642 200 L 731 200" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-forward)"/>
+                    <path d="M 642 204 L 731 204" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,4" marker-start="url(#arrow-backward)"/>
+                    <text x="670" y="190" fill="#f87171" font-size="11">∂L/∂ŷ (誤差訊號)</text>
+                    
+                    <line x1="770" y1="280" x2="770" y2="227" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-forward)"/>
+                    <text x="770" y="298" fill="#cbd5e1" font-size="12" text-anchor="middle">真實標籤 (y)</text>
+                </svg>
+            </div>
+        </section>
+
+        <section class="section-card">
+            <h2>5. 應用案例：MNIST 手寫數字辨識</h2>
+            <p>為了將理論付諸實踐，我們以最經典的 <strong>MNIST 手寫數字數據集辨識</strong> 為例，展示一個簡單的兩層多層感知機（MLP）如何利用 Backpropagation 進行端到端的訓練優化。</p>
+            
+            <h3>完整端到端資料流程演進</h3>
+            <p>影像的輸入尺寸為 $28 \times 28$ 像素的灰階圖，我們將其展平成為一個 $784$ 維的向量。整個架構的資料與梯度流動如下圖與代碼區塊所示：</p>
+            
+            <pre><code>【輸入圖片 (28x28=784)】 
+       │ 
+       ▼ (前向傳播)
+【隱藏層: 784 -> 128 節點】 ── 激活函數: ReLU(z) ── 產生特徵向量 h
+       │ 
+       ▼ (前向傳播)
+【輸出層: 128 -> 10 節點】  ── 激活函數: Softmax(z) ── 預測機率分布 ŷ (0~9)
+       │
+       ▼ (計算損失)
+【交叉熵損失函數 Cross-Entropy Loss】 ── 對比真實標籤 y 算出總 Loss
+       │
+       ▼ █▓▒░ 觸發反向傳播 (Backpropagation) ░▒▓█
+【計算各層偏導數】 ── 依鏈鎖律由後往前：求出 ∂L/∂W⁽²⁾ 與 ∂L/∂W⁽¹⁾
+       │
+       ▼ (優化更新)
+【隨機梯度下降 SGD】 ── 根據梯度更新權重矩陣，完成一輪迭代學習！</code></pre>
+
+            <h3>核心 PyTorch 架構實作概念樣式</h3>
+            <p>在實際開發中，雖然 PyTorch 的 <code>autograd</code> 會自動幫我們處理反向傳播的細節，但其底層正是嚴格執行上述的偏導數連乘流。以下為該網路結構的核心抽象原型：</p>
+            <pre><span style="color: #ff79c6;">import</span> torch.nn <span style="color: #ff79c6;">as</span> nn
+
+<span style="color: #ff79c6;">class</span> <span style="color: #50fa7b;">MNISTSimpleMLP</span>(nn.Module):
+    <span style="color: #ff79c6;">def</span> <span style="color: #50fa7b;">__init__</span>(<span style="color: #f8f8f2;">self</span>):
+        <span style="color: #8be9fd; font-style: italic;">super</span>().__init__()
+        <span style="color: #6272a4;"># 輸入層到隱藏層參數矩陣 W1: 784 -> 128</span>
+        <span style="color: #f8f8f2;">self</span>.hidden = nn.Linear(<span style="color: #bd93f9;">784</span>, <span style="color: #bd93f9;">128</span>)
+        <span style="color: #6272a4;"># 隱藏層到輸出層參數矩陣 W2: 128 -> 10</span>
+        <span style="color: #f8f8f2;">self</span>.output = nn.Linear(<span style="color: #bd93f9;">128</span>, <span style="color: #bd93f9;">10</span>)
+        <span style="color: #f8f8f2;">self</span>.relu = nn.ReLU()
+        
+    <span style="color: #ff79c6;">def</span> <span style="color: #50fa7b;">forward</span>(<span style="color: #f8f8f2;">self</span>, <span style="color: #f8f8f2;">x</span>):
+        <span style="color: #6272a4;"># 1. 前向傳播資料流</span>
+        x = x.view(-<span style="color: #bd93f9;">1</span>, <span style="color: #bd93f9;">784</span>) <span style="color: #6272a4;"># 展平影像</span>
+        x = <span style="color: #f8f8f2;">self</span>.relu(<span style="color: #f8f8f2;">self</span>.hidden(x))
+        x = <span style="color: #f8f8f2;">self</span>.output(x)
+        <span style="color: #ff79c6;">return</span> x
+
+<span style="color: #6272a4;"># 訓練循環中的反向傳播觸發點</span>
+<span style="color: #6272a4;"># loss = criterion(outputs, labels)</span>
+<span style="color: #6272a4;"># loss.backward() &lt;-- 此處即在執行運算圖上的 Backpropagation</span>
+</pre>
+        </section>
+
+        <section class="section-card">
+            <h2>6. 學習反思</h2>
+            <p><strong>AI 真的幫了我很大的忙，但前提是不能全信它。</strong></p>
+            <p>剛開始卡關的時候，AI 是一個非常棒的「破冰工具」。它寫程式碼原型的速度極快，而且很擅長用一些白話的譬喻（像是我們在對話裡聊到的「剝洋蔥」和「梯度在馬路上乾涸」）幫我快速建立畫面感，讓我不會一開始就被一堆 $\partial$ 符號嚇退。需要查 API 或者忘記某個函數怎麼用時，問它也是幾秒鐘就有答案，省去了在 Stack Overflow 瞎撈的時間。</p>
+            
+            <p>但說真的，用久了就會發現 AI 的盲點——它太喜歡「點到為止」和給出標準答案了。當我深入追問 Sigmoid 為什麼會導致梯度消失時，它一開始只給了我一個通俗的「因為連乘會變小」的結論。需要我再另外查資料，把$\sigma'(z) = \sigma(z)(1-\sigma(z))$ 一步步展開，才能算出它的最大值就是 0.25 之後。
+            
+            <p>而且 AI 寫的代碼高度封裝，如果不去思考底層的矩陣維度變化和資料流向，很容易讓人變懶，忘記資工系最核心的算法推導和解決問題的能力。要是哪天模型噴錯誤（Bug）或者遇到 AI 沒看過的架構，大概就直接翻車了。</p>
+            
+            <p><strong>最後的一點點心得：</strong></p>
+            <p>這次做完報告，我搞懂了「如何跟 AI 合作」：讓 AI 負責幹雜活、幫忙快速抓重點和寫程式骨架；而我們人類則要把精力放在嚴謹的邏輯查證、底層數學推導和批判性思考上。這樣我們才能最大程度的保證效率以及精確度。</p>
+        </section>
+    </main>
+
+</body>
+</html>
